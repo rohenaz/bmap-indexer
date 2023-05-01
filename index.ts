@@ -1,53 +1,9 @@
 import { JungleBusClient } from '@gorillapool/js-junglebus'
 import chalk from 'chalk'
-import { fork } from 'child_process'
-import net from 'net'
-import redline from 'readline'
 import { crawler, setCurrentBlock } from './crawler.js'
 import { closeDb, getDbo } from './db.js'
 import { ensureEnvVars } from './env.js'
 import { getCurrentBlock } from './state.js'
-
-/* Bitsocket runs in a child process */
-
-// const bitsocket = fork('./build/bitsocket')
-
-/* Planarium (API Server Process) */
-const api = fork('./build/api')
-
-export const enum ConnectionStatus {
-  Connecting = 0,
-  Connected,
-  Disconnected,
-  Error,
-}
-export var socket: net.Socket
-
-let connectionStatus = ConnectionStatus.Disconnected
-
-// Open up the server and send RPC socket to child. Use pauseOnConnect to prevent
-// the sockets from being read before they are sent to the child process.
-// const server = net.createServer({ pauseOnConnect: true })
-// server.on('connection', (s) => {
-// api.send({ type: 'socket', socket: s })
-// socket = s
-
-// process.on('message', (data: any) => {
-//   console.log('message received by parent!', data)
-//   switch (data.type) {
-//     case '':
-//     case 'tx':
-//       try {
-//         processTransaction(data.rawTx)
-//       } catch (e) {
-//         console.error('Failed to ingest tx', e)
-//       }
-//       break
-//   }
-// })
-// })
-
-// server.listen(1336)
 
 const start = async () => {
   await ensureEnvVars()
@@ -66,28 +22,21 @@ const start = async () => {
       protocol: 'protobuf',
       onConnected(ctx) {
         // add your own code here
-        connectionStatus = ConnectionStatus.Connected
-        api.send({ status: connectionStatus, type: 'status' })
-        console.log(ctx)
+
+        console.log({ status: 'connected', ctx })
       },
       onConnecting(ctx) {
         // add your own code here
-        connectionStatus = ConnectionStatus.Connecting
-        api.send({ status: connectionStatus, type: 'status' })
-        console.log(ctx)
+
+        console.log({ status: 'connecting', ctx })
       },
       onDisconnected(ctx) {
         // add your own code here
-        connectionStatus = ConnectionStatus.Disconnected
-        api.send({ status: connectionStatus, type: 'status' })
-        console.log(ctx)
+        console.log({ status: 'disconnected', ctx })
       },
       onError(ctx) {
         // add your own code here
-        console.error(ctx)
-        connectionStatus = ConnectionStatus.Error
-        api.send({ status: connectionStatus, type: 'status' })
-        // reject(ctx)
+        console.log({ status: 'error', ctx })
       },
     })
 
@@ -95,19 +44,6 @@ const start = async () => {
   } catch (e) {
     console.error(e)
   }
-}
-
-// Handle interrupt
-if (process.platform === 'win32') {
-  let rl = redline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-
-  rl.on('SIGINT', function () {
-    // ToDo - TS hates this
-    // process.emit('SIGINT')
-  })
 }
 
 process.on('SIGINT', async function () {
