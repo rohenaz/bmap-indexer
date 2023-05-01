@@ -12,7 +12,6 @@ const getDbo = async () => {
     try {
       console.log(chalk.bgYellow(`Connecting to ${process.env.MONGO_URL}`))
       client = await MongoClient.connect(process.env.MONGO_URL, {
-      //client = await MongoClient.connect(`mongodb://127.0.0.1:27017/bmap`, {
         minPoolSize: 1,
         maxPoolSize: 10,
       })
