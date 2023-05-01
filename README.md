@@ -10,69 +10,7 @@ A crawler and indexer that saves transaction data into a MongoDB database.
 
 ## API
 
-A REST API supporting BitQuery syntax.
-
-![alt text](public/screen.png 'Screenshot')
-
-```json
-{
-  "find": {
-    "MAP.app": "tonicpow"
-  }
-}
-```
-
-It then provides support for a number of known OP_RETURN protocols making queries nicer:
-
-```json
-{
-  "find": {
-    "BITPIC.paymail": "satchmo@moneybutton.com"
-  }
-}
-```
-
-For a full list of what protocols are supported see [bmapjs.com](https://bmapjs.com)
-
-It also makes working with the results from your frontend much friendlier
-
-```js
-let res = await fetch('https://b.map.sv/q/...')
-let j = res.json()
-console.log('Got tx', j[0].tx.h, 'app:', j[0].MAP.app)
-```
-
-## Socket
-
-Using the same query syntax you can listen for changes:
-
-```js
-var sock = {
-  v: 3,
-  q: {
-    find: {
-      'MAP.type': { $in: ['post', 'message'] },
-    },
-    sort: {
-      'blk.t': -1,
-    },
-  },
-}
-```
-
-```js
-var sock_b64 = btoa(JSON.stringify(sock))
-var socket_url = 'https://b.map.sv/s/' + sock_b64
-
-// socket
-bmapSocket = new EventSource(socket_url)
-bmapSocket.onmessage = function (e) {
-  var res = JSON.parse(e.data)
-  if (res.type === 'push') {
-    // do something with res.data
-  }
-}
-```
+API Was moved to seperate repo rohenaz/bmap-api
 
 # Install
 
