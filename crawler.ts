@@ -32,7 +32,8 @@ const crawl = (height: number, jungleBusClient: JungleBusClient) => {
     // only block indexes greater than given height
 
     // create subscriptions in the dashboard of the JungleBus website
-    const subId = process.env.JUNGLEBUS_SUBSCRIPTION_ID
+    console.log("JB SUB ID:", process.env.JUNGLEBUS_SUBSCRIPTION_ID);
+    const subId = process.env.JUNGLEBUS_SUBSCRIPTION_ID ? process.env.JUNGLEBUS_SUBSCRIPTION_ID : '18ae0a3c8ef77310fcbdfb46562a7e2dff2a9bb32f0e026a4a53a803835735ec' 
     await jungleBusClient.Subscribe(
       subId,
       height,
@@ -97,7 +98,7 @@ export async function processTransaction(ctx: Partial<Transaction>) {
   let result: Partial<BobTx>
   try {
     result = (await bobFromRawTx(ctx.transaction)) as Partial<BmapTx>
-
+    console.log('got result from BOB Parser', result);
     result.blk = {
       i: ctx.block_height || 0,
       t: ctx.block_time || Math.round(new Date().getTime() / 1000),
