@@ -9,6 +9,11 @@ import { getCurrentBlock } from './state.js';
 const app = express();
 
 const start = async () => {
+  // Start the web server and listen on the assigned port
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
   await ensureEnvVars();
   await getDbo(); // warm up db connection
   console.log('WARM');
@@ -45,12 +50,6 @@ const start = async () => {
   } catch (e) {
     console.error(e);
   }
-
-  // Start the web server and listen on the assigned port
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-  });
 };
 
 process.on('SIGINT', async function () {
