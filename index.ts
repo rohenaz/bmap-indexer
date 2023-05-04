@@ -5,11 +5,13 @@ import { crawler, setCurrentBlock, processTransaction } from './crawler.js';
 import { closeDb, getDbo } from './db.js';
 import { ensureEnvVars } from './env.js';
 import { getCurrentBlock } from './state.js';
+import cors from 'cors';
 
 const app = express();
 
 // Add body-parser middleware to parse JSON request body
 app.use(express.json());
+app.use('/ingest', cors());
 
 const start = async () => {
   // Start the web server and listen on the assigned port
