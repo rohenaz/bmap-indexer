@@ -1,12 +1,15 @@
 import express from 'express';
 import { JungleBusClient } from '@gorillapool/js-junglebus';
 import chalk from 'chalk';
-import { crawler, setCurrentBlock } from './crawler.js';
+import { crawler, setCurrentBlock, processTransaction } from './crawler.js';
 import { closeDb, getDbo } from './db.js';
 import { ensureEnvVars } from './env.js';
 import { getCurrentBlock } from './state.js';
 
 const app = express();
+
+// Add body-parser middleware to parse JSON request body
+app.use(express.json());
 
 const start = async () => {
   // Start the web server and listen on the assigned port
@@ -51,6 +54,26 @@ const start = async () => {
     console.error(e);
   }
 };
+
+// Define the /ingest endpoint
+app.post('/ingest', function (req, res) {
+  // ingest a raw tx
+  console.log('ingest', req.body.rawTx);
+
+  if (req.body.rawTx) {
+    processTransaction({
+      transaction: req.body.rawTx,
+    })
+      .then((tx) => {
+        res.status(201).send(tx);
+      })
+      .catch((e) => res.status(500).send(e));
+
+    return;
+  } else {
+    return res.status(400).send();
+  }
+});
 
 process.on('SIGINT', async function () {
   // graceful shutdown
