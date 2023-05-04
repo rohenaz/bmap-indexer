@@ -1,5 +1,5 @@
 const config = {
-  from: 782222,
+  from: 790000,
 }
 
 export { config }
