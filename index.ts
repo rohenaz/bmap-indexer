@@ -11,7 +11,7 @@ const app = express();
 
 // Add body-parser middleware to parse JSON request body
 app.use(express.json());
-app.use('/ingest', cors());
+app.use(cors())
 
 const start = async () => {
   // Start the web server and listen on the assigned port
