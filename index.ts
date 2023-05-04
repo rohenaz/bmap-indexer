@@ -58,10 +58,9 @@ const start = async () => {
 };
 
 // Define the /ingest endpoint
-app.post('/ingest', function (req, res) {
+app.post('/injest', function (req, res) {
   // ingest a raw tx
   console.log('ingest', req.body.rawTx);
-
   if (req.body.rawTx) {
     processTransaction({
       transaction: req.body.rawTx,
