@@ -9,7 +9,7 @@ import chalk from 'chalk'
 import { rewind, saveTx } from './actions.js'
 import { getDbo } from './db.js'
 
-let currentBlock = 0
+let currentBlock = 793295
 let synced = false
 
 const bobFromRawTx = async (rawtx: string) => {
@@ -34,63 +34,67 @@ const crawl = (height: number, jungleBusClient: JungleBusClient) => {
     // create subscriptions in the dashboard of the JungleBus website
     console.log("JB SUB ID:", process.env.JUNGLEBUS_SUBSCRIPTION_ID);
     const subId = process.env.JUNGLEBUS_SUBSCRIPTION_ID ? process.env.JUNGLEBUS_SUBSCRIPTION_ID : '18ae0a3c8ef77310fcbdfb46562a7e2dff2a9bb32f0e026a4a53a803835735ec' 
-    await jungleBusClient.Subscribe(
-      subId,
-      height,
-      async function onPublish(ctx) {
-        //console.log('TRANSACTION', ctx.id)
-        try {
-          await processTransaction(ctx)
-        } catch (e) {
-          console.log(chalk.redBright(`Failed to process block tx`, e))
+    try {
+      await jungleBusClient.Subscribe(
+        subId,
+        height,
+        async function onPublish(ctx) {
+          console.log('TRANSACTION', ctx.id)
+          try {
+            await processTransaction(ctx)
+          } catch (e) {
+            console.log(chalk.redBright(`Failed to process block tx`, e))
+          }
+        },
+        async function onStatus(cMsg) {
+          if (cMsg.statusCode === ControlMessageStatusCode.BLOCK_DONE) {
+            // add your own code here
+  
+            setCurrentBlock(cMsg.block)
+  
+            console.log(
+              chalk.blue('####  '),
+              chalk.magenta('NEW BLOCK '),
+              chalk.green(currentBlock),
+              cMsg.transactions > 0
+                ? chalk.bgCyan(cMsg.transactions)
+                : chalk.bgGray('No transactions this block')
+            )
+          } else if (cMsg.statusCode === ControlMessageStatusCode.WAITING) {
+            console.log(
+              chalk.blue('####  '),
+              chalk.yellow('WAITING ON NEW BLOCK ')
+            )
+            synced = true
+          } else if (cMsg.statusCode === ControlMessageStatusCode.REORG) {
+            console.log(
+              chalk.blue('####  '),
+              chalk.red('REORG TRIGGERED ', cMsg.block)
+            )
+  
+            await rewind(cMsg.block)
+            setCurrentBlock(cMsg.block)
+          } else {
+            chalk.red(cMsg)
+          }
+        },
+        function onError(cErr) {
+          console.error(cErr)
+          reject(cErr)
+        },
+        async function onMempool(ctx) {
+          console.log('MEMPOOL TRANSACTION', ctx.id)
+          try {
+            await processTransaction(ctx)
+            console.log('MEMPOOL TRANSACTION', ctx.id, "complete")
+          } catch (e) {
+            console.log(chalk.redBright(`Failed to process mempool tx`, e))
+          }
         }
-      },
-      async function onStatus(cMsg) {
-        if (cMsg.statusCode === ControlMessageStatusCode.BLOCK_DONE) {
-          // add your own code here
-
-          setCurrentBlock(cMsg.block)
-
-          console.log(
-            chalk.blue('####  '),
-            chalk.magenta('NEW BLOCK '),
-            chalk.green(currentBlock),
-            cMsg.transactions > 0
-              ? chalk.bgCyan(cMsg.transactions)
-              : chalk.bgGray('No transactions this block')
-          )
-        } else if (cMsg.statusCode === ControlMessageStatusCode.WAITING) {
-          console.log(
-            chalk.blue('####  '),
-            chalk.yellow('WAITING ON NEW BLOCK ')
-          )
-          synced = true
-        } else if (cMsg.statusCode === ControlMessageStatusCode.REORG) {
-          console.log(
-            chalk.blue('####  '),
-            chalk.red('REORG TRIGGERED ', cMsg.block)
-          )
-
-          await rewind(cMsg.block)
-          setCurrentBlock(cMsg.block)
-        } else {
-          chalk.red(cMsg)
-        }
-      },
-      function onError(cErr) {
-        console.error(cErr)
-        reject(cErr)
-      },
-      async function onMempool(ctx) {
-        console.log('MEMPOOL TRANSACTION', ctx.id)
-
-        try {
-          await processTransaction(ctx)
-        } catch (e) {
-          console.log(chalk.redBright(`Failed to process mempool tx`, e))
-        }
-      }
-    )
+      )
+    } catch (error) {
+      console.log("Couldn't process:", error)
+    }
   })
 }
 
@@ -121,7 +125,10 @@ export async function processTransaction(ctx: Partial<Transaction>) {
   }
 
   try {
-    return await saveTx(result as BobTx)
+    console.log("Saving TX...", result)
+    let response =  await saveTx(result as BobTx)
+    console.log("txSaved")
+    return response;
   } catch (e) {
     console.error('Failed to save tx', e)
     return null

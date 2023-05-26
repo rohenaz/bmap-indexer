@@ -76,6 +76,7 @@ app.post('/injest', function (req, res) {
   }
 });
 
+
 process.on('SIGINT', async function () {
   // graceful shutdown
   console.log('close from shutdown');

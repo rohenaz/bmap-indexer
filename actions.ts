@@ -10,8 +10,14 @@ const saveTx = async (tx: BobTx) => {
   let t: any
   let dbo: Db
   // Transform
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // your error handling logic here
+  });
   try {
+    console.log("connecting to DBO");
     dbo = await getDbo()
+    console.log("connected to DBO");
   } catch (e) {
     // await closeDb()
     let txid = tx && tx.tx ? tx.tx.h : undefined
@@ -22,7 +28,6 @@ const saveTx = async (tx: BobTx) => {
   } catch (e) {
     throw new Error('Failed to transform tx ' + tx)
   }
-
   // get BAP IDs for given social op
   if (t.AIP) {
     let bap
